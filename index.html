@@ -1,0 +1,306 @@
+<title>Neon HUD Loaders</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700&family=Chakra+Petch:wght@400;600&family=Share+Tech+Mono&display=swap">
+<style>
+@property --p{syntax:"<number>"; inherits:false; initial-value:0}
+:root{
+  --void:#05070D; --panel:#080D18; --edge:#16233C;
+  --cyan:#23E5FF; --mag:#FF2E88; --dim:#3E5A80; --track:#1D3555; --off:#25537A;
+  --paper:#E8FBFF; --muted:#7FA8C4;
+  --mono:"Share Tech Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --ui:"Chakra Petch", system-ui, sans-serif;
+  --display:Orbitron, "Chakra Petch", system-ui, sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100%; color:var(--paper); font:15px/1.6 var(--ui);
+  background:
+    repeating-linear-gradient(90deg, rgba(35,229,255,.05) 0 1px, transparent 1px 34px),
+    repeating-linear-gradient(0deg, rgba(35,229,255,.05) 0 1px, transparent 1px 34px),
+    radial-gradient(70% 50% at 12% 0%, rgba(35,229,255,.16), transparent 60%),
+    radial-gradient(60% 45% at 92% 12%, rgba(255,46,136,.16), transparent 60%),
+    var(--void);
+  padding-inline:clamp(16px,4vw,52px); padding-block:44px 64px;
+}
+.wrap{max-width:1160px; margin:0 auto; display:grid; gap:40px}
+
+header.top{display:grid; gap:14px}
+.eyebrow{font:12px/1 var(--mono); letter-spacing:.14em; color:var(--cyan); opacity:.75}
+h1{margin:0; font:700 clamp(38px,7vw,74px)/1 var(--display); letter-spacing:.04em; color:var(--cyan);
+  text-shadow:0 0 30px rgba(35,229,255,.5), 3px 0 18px rgba(255,46,136,.35)}
+.lede{margin:0; max-width:58ch; color:var(--muted); font-size:16px}
+.legend{display:flex; flex-wrap:wrap; gap:6px 22px; font:12px/1.5 var(--mono); letter-spacing:.06em; color:var(--muted)}
+.legend b{color:var(--cyan); font-weight:400}
+
+.pair{display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,430px),1fr)); gap:28px}
+.spec{position:relative; background:linear-gradient(180deg, rgba(35,229,255,.07), rgba(5,7,13,.2)); padding:1px;
+  clip-path:polygon(18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%, 0 18px)}
+.spec > .inner{background:var(--panel); height:100%; display:grid; grid-template-rows:auto 1fr auto;
+  clip-path:polygon(17px 0, 100% 0, 100% calc(100% - 17px), calc(100% - 17px) 100%, 0 100%, 0 17px)}
+.head{display:flex; flex-wrap:wrap; justify-content:space-between; align-items:baseline; gap:6px 14px;
+  padding:18px 22px 14px; border-bottom:1px solid var(--edge)}
+.head h2{margin:0; font:600 21px/1 var(--ui); letter-spacing:.14em; text-transform:uppercase; color:var(--paper)}
+.head .kind{font:11px/1 var(--mono); letter-spacing:.14em; color:var(--mag)}
+.head p{margin:6px 0 0; flex:1 1 100%; font-size:13.5px; color:var(--muted); max-width:52ch}
+
+.stage{position:relative; min-height:320px; overflow:hidden;
+  background:
+    repeating-linear-gradient(90deg, rgba(35,229,255,.07) 0 1px, transparent 1px 30px),
+    repeating-linear-gradient(0deg, rgba(35,229,255,.07) 0 1px, transparent 1px 30px),
+    radial-gradient(120% 95% at 30% 8%, #16213a 0%, #070c16 55%, #05070d 100%);
+  font-family:var(--mono); --acc:var(--cyan)}
+.stage.is-complete{--acc:var(--mag)}
+.cy-in{display:grid; align-content:space-between; gap:14px; height:100%; padding:24px 26px}
+.cy-top,.cy-bot{display:flex; justify-content:space-between; gap:12px; font-size:12.5px; letter-spacing:.06em; color:var(--cyan)}
+.stage.is-zero .cy-top,.stage.is-zero .cy-bot{opacity:.45}
+.cy-status{color:var(--acc)}
+
+/* --- uplink --- */
+.barhold{position:relative; margin:4px 0}
+.barwrap{position:relative; height:72px; background:#2a3c5c;
+  clip-path:polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px)}
+.is-progress .barwrap{background:var(--cyan); box-shadow:0 0 26px rgba(35,229,255,.45); animation:flick 4s steps(1) infinite}
+.is-complete .barwrap{background:var(--mag); box-shadow:0 0 30px rgba(255,46,136,.5)}
+.bar{position:absolute; inset:1.5px; background:#070c16; overflow:hidden;
+  clip-path:polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px)}
+.ticks{position:absolute; inset:9px; display:flex; gap:4px; pointer-events:none}
+.ticks i{flex:1; background:var(--off); opacity:.5}
+.ticks.lit i{background:var(--cyan); opacity:1; box-shadow:0 0 8px var(--cyan)}
+.ticks.lit{opacity:0;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 45%,#000 60%,transparent); mask-image:linear-gradient(90deg,transparent,#000 45%,#000 60%,transparent);
+  -webkit-mask-size:200px 100%; mask-size:200px 100%; -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
+  -webkit-mask-position:-200px 0; mask-position:-200px 0}
+.is-progress .ticks.lit{opacity:1; animation:maskmove 1.9s linear infinite}
+.is-complete .ticks.lit{opacity:1; -webkit-mask-image:none; mask-image:none}
+.is-complete .ticks.lit i{background:var(--mag); box-shadow:0 0 9px var(--mag)}
+@keyframes maskmove{from{-webkit-mask-position:-200px 0; mask-position:-200px 0} to{-webkit-mask-position:100% 0; mask-position:100% 0}}
+@keyframes flick{0%,88%{opacity:1} 90%{opacity:.55} 91%{opacity:1} 95%{opacity:.7} 96%{opacity:1}}
+.sweep{position:absolute; top:5px; bottom:5px; left:-110px; width:110px; opacity:0;
+  background:linear-gradient(90deg, rgba(35,229,255,0), rgba(35,229,255,.45) 72%, #e6fbff);
+  box-shadow:0 0 30px rgba(35,229,255,.85)}
+.is-progress .sweep{opacity:1; animation:sweepmove 1.9s linear infinite}
+@keyframes sweepmove{from{left:-110px} to{left:100%}}
+.wash{position:absolute; inset:9px; opacity:0; background:linear-gradient(90deg, rgba(35,229,255,.28), rgba(255,46,136,.42))}
+.is-complete .wash{opacity:1}
+.scan{position:absolute; left:2px; right:2px; top:9px; height:1px; background:#bff6ff; box-shadow:0 0 12px var(--cyan); opacity:0}
+.is-progress .scan{opacity:.7; animation:scanmove 2.6s ease-in-out infinite}
+@keyframes scanmove{0%,100%{top:9px} 50%{top:60px}}
+.brk{position:absolute; width:18px; height:18px; border:2px solid var(--acc); opacity:0; filter:drop-shadow(0 0 7px var(--acc))}
+.brk.tl{left:-9px; top:-8px; border-right:0; border-bottom:0}
+.brk.br{right:-9px; bottom:-8px; border-left:0; border-top:0}
+.is-progress .brk,.is-complete .brk{opacity:1}
+.cy-word{position:relative; text-align:center; font-family:var(--display); font-weight:700; font-size:17px;
+  letter-spacing:.42em; color:var(--paper); text-shadow:0 0 16px rgba(35,229,255,.85)}
+.is-zero .cy-word{font-size:14px; letter-spacing:.2em; color:var(--dim); text-shadow:none}
+.is-complete .cy-word{text-shadow:0 0 18px rgba(255,46,136,.9)}
+.is-progress .cy-word{animation:flick 3.4s steps(1) infinite}
+.cy-word::before{content:attr(data-w); position:absolute; inset:0; z-index:-1; color:var(--mag); opacity:0; transform:translateX(3px)}
+.is-progress .cy-word::before{opacity:.5; animation:glitch 3.2s steps(1) infinite}
+@keyframes glitch{0%,90%{transform:translateX(3px)} 92%{transform:translateX(-5px)} 94%{transform:translateX(7px)} 96%{transform:translateX(-2px)}}
+
+/* --- core --- */
+.cy-core{display:flex; align-items:center; gap:26px; flex-wrap:wrap}
+.ring{position:relative; width:134px; height:134px; flex:none}
+.ring .trk,.ring .val{position:absolute; inset:0; border-radius:50%;
+  -webkit-mask:radial-gradient(closest-side circle, transparent 0 74%, #000 74.5%); mask:radial-gradient(closest-side circle, transparent 0 74%, #000 74.5%)}
+.ring .trk{background:conic-gradient(from -90deg, var(--track) 0 100%); opacity:.85}
+.ring .val{--p:0; background:conic-gradient(from -90deg, var(--acc) 0 calc(var(--p) * 1%), transparent calc(var(--p) * 1%) 100%);
+  filter:drop-shadow(0 0 10px var(--acc)); transition:--p .4s linear}
+.ring .num{position:absolute; inset:0; display:grid; place-content:center; justify-items:center; gap:3px}
+.ring b{font:700 29px/1 var(--display); color:var(--paper); font-variant-numeric:tabular-nums; text-shadow:0 0 14px rgba(35,229,255,.8)}
+.is-zero .ring b{color:var(--dim); text-shadow:none}
+.ring small{font:10px/1 var(--mono); letter-spacing:.18em; color:var(--acc); opacity:.85}
+.cy-right{flex:1 1 200px; min-width:0; display:grid; gap:12px}
+.cy-label{font:600 14px/1 var(--ui); letter-spacing:.18em; color:var(--paper)}
+.is-zero .cy-label{color:var(--dim)}
+.segs{position:relative; display:flex; gap:3px; height:30px; overflow:hidden}
+.segs i{flex:1; background:var(--track); opacity:.7}
+.segs i.on{background:var(--acc); opacity:1; box-shadow:0 0 11px var(--acc)}
+.segs i.half{background:var(--acc); opacity:.4; box-shadow:none}
+.segs::after{content:""; position:absolute; top:0; bottom:0; left:-90px; width:90px; opacity:0;
+  background:linear-gradient(90deg, transparent, rgba(230,251,255,.4), transparent)}
+.is-progress .segs::after{opacity:1; animation:shim 2.2s linear infinite}
+@keyframes shim{from{left:-90px} to{left:100%}}
+.cy-read{display:flex; justify-content:space-between; gap:12px; font:12.5px/1 var(--mono); color:var(--cyan); opacity:.85}
+.cy-read span:last-child{color:var(--acc)}
+.cy-rail{height:1px; background:var(--acc); opacity:.35}
+.is-complete .cy-rail{height:2px; opacity:.9; box-shadow:0 0 14px var(--mag)}
+
+/* --- controls --- */
+.controls{display:flex; flex-wrap:wrap; gap:10px; align-items:center; padding:16px 22px 20px; border-top:1px solid var(--edge)}
+.seg{display:inline-flex; gap:6px}
+.seg button, .run{font:600 12px/1 var(--ui); letter-spacing:.12em; text-transform:uppercase; cursor:pointer;
+  background:transparent; color:var(--cyan); border:1px solid rgba(35,229,255,.45); padding:10px 14px;
+  clip-path:polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px)}
+.seg button:hover, .run:hover{border-color:var(--cyan); box-shadow:0 0 14px rgba(35,229,255,.3)}
+.seg button[aria-pressed="true"]{background:var(--cyan); color:#04121a; border-color:var(--cyan); box-shadow:0 0 18px rgba(35,229,255,.45)}
+.run{color:var(--mag); border-color:rgba(255,46,136,.5)}
+.run:hover{border-color:var(--mag); box-shadow:0 0 16px rgba(255,46,136,.35)}
+button:focus-visible, input:focus-visible{outline:2px solid var(--paper); outline-offset:2px}
+.scrub{display:flex; align-items:center; gap:10px; flex:1 1 150px; min-width:0; font:11px/1 var(--mono); letter-spacing:.12em; color:var(--muted)}
+.scrub input{flex:1; min-width:0; accent-color:var(--cyan)}
+.scrub output{width:4ch; text-align:right; color:var(--cyan); font-variant-numeric:tabular-nums}
+footer{font:12px/1.7 var(--mono); letter-spacing:.06em; color:var(--muted); border-top:1px solid var(--edge); padding-top:18px}
+footer b{color:var(--cyan); font-weight:400}
+
+@media (prefers-reduced-motion: reduce){
+  .is-progress .ticks.lit{animation:none; -webkit-mask-image:none; mask-image:none; opacity:.55}
+  .is-progress .sweep, .is-progress .segs::after{animation:none}
+  .is-progress .sweep{left:45%}
+  .is-progress .barwrap, .is-progress .cy-word, .is-progress .cy-word::before{animation:none}
+  .is-progress .scan{animation:none; top:34px}
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">ADVANCED INTERFACE // WEEK 1 // TONE: CYBERPUNK</div>
+    <h1>UPLINK &amp; CORE</h1>
+    <p class="lede">Neon under wet concrete. Hard-cut HUD frames, scanlines and an electric charge that runs the length of the track. Cyan means the system is alive; magenta means it just arrived.</p>
+    <div class="legend"><span><b>ZERO</b> nothing has started</span><span><b>PROGRESS</b> work is happening</span><span><b>COMPLETE</b> work is done</span></div>
+  </header>
+
+  <div class="pair">
+    <article class="spec" data-id="uplink" data-det="0"><div class="inner">
+      <div class="head">
+        <h2>Uplink</h2><span class="kind">// INDETERMINATE</span>
+        <p>A charge runs the track and lights the bars it passes, so the system reads as alive without claiming to know how far along it is. Arrival flips the whole rail to magenta.</p>
+      </div>
+      <div class="stage is-zero" role="progressbar" aria-label="Uplink, indeterminate" aria-busy="false">
+        <div class="cy-in">
+          <div class="cy-top"><span>&#9700; UPLINK.CH07</span><span class="cy-status">STANDBY</span></div>
+          <div class="barhold">
+            <span class="brk tl"></span><span class="brk br"></span>
+            <div class="barwrap"><div class="bar">
+              <div class="ticks"></div><div class="ticks lit"></div>
+              <div class="wash"></div><div class="sweep"></div><div class="scan"></div>
+            </div></div>
+          </div>
+          <div class="cy-word" data-w="AWAITING LINK">AWAITING LINK</div>
+          <div class="cy-bot"><span class="cy-tx">TX 0.00 MB/s</span><span class="cy-pkt">PKT &#8212;&#8212;</span></div>
+        </div>
+      </div>
+      <div class="controls"></div>
+    </div></article>
+
+    <article class="spec" data-id="core" data-det="1"><div class="inner">
+      <div class="head">
+        <h2>Core</h2><span class="kind">// DETERMINATE</span>
+        <p>A neon ring carries the percentage while sixteen cells give it a readable grain, with the sector count and gigabytes written out below. At 100% the ring and cells burn magenta.</p>
+      </div>
+      <div class="stage is-zero" role="progressbar" aria-label="Core, determinate" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div class="cy-in">
+          <div class="cy-top"><span>&#9700; CORE.SYS</span><span class="cy-status">STANDBY</span></div>
+          <div class="cy-core">
+            <div class="ring">
+              <div class="trk"></div><div class="val"></div>
+              <div class="num"><b>00%</b><small>IDLE</small></div>
+            </div>
+            <div class="cy-right">
+              <div class="cy-label">AWAITING TASK</div>
+              <div class="segs"></div>
+              <div class="cy-read"><span class="cy-sec">SEC 00/16</span><span class="cy-gb">0.0/48.0 GB</span></div>
+            </div>
+          </div>
+          <div class="cy-rail"></div>
+          <div class="cy-bot"><span class="cy-eta">QUEUE EMPTY</span><span class="cy-crc"></span></div>
+        </div>
+      </div>
+      <div class="controls"></div>
+    </div></article>
+  </div>
+
+  <footer>Press <b>RUN</b> to play a simulated task through to completion, or jump straight to a state. Core also takes a value from the slider. Both report progress to screen readers, and motion is reduced when the system asks for it.</footer>
+</div>
+
+<script>
+(function(){
+  document.querySelectorAll('.ticks').forEach(row=>{ for(let i=0;i<44;i++) row.appendChild(document.createElement('i')); });
+  document.querySelectorAll('.segs').forEach(row=>{ for(let i=0;i<16;i++) row.appendChild(document.createElement('i')); });
+
+  const R = {
+    uplink(st, s, v, t){
+      st.querySelector('.cy-status').textContent = {zero:'STANDBY', progress:'SYNCING', complete:'LINKED'}[s];
+      const word = {zero:'AWAITING LINK', progress:'LOADING', complete:'LINKED ✓'}[s];
+      const w = st.querySelector('.cy-word'); w.textContent = word; w.dataset.w = word;
+      const rate = 3.4 + Math.sin((t||0)/260)*0.9 + Math.random()*0.3;
+      st.querySelector('.cy-tx').textContent = s==='zero' ? 'TX 0.00 MB/s' : s==='complete' ? 'TX 12.8 / 12.8 MB' : 'TX '+rate.toFixed(2)+' MB/s';
+      st.querySelector('.cy-pkt').textContent = s==='zero' ? 'PKT ——' : s==='complete' ? 'CRC OK'
+        : 'PKT 0x'+Math.floor(Math.abs(Math.sin((t||0)/97))*65535).toString(16).toUpperCase().padStart(4,'0');
+    },
+    core(st, s, v){
+      const N = 16, lit = s==='complete' ? N : Math.floor(v/100*N);
+      st.querySelector('.val').style.setProperty('--p', v);
+      st.querySelector('.ring b').textContent = String(Math.round(v)).padStart(2,'0')+'%';
+      st.querySelector('.ring small').textContent = {zero:'IDLE', progress:'PWR', complete:'FULL'}[s];
+      st.querySelector('.cy-status').textContent = {zero:'STANDBY', progress:'WRITING', complete:'ONLINE'}[s];
+      st.querySelector('.cy-label').textContent = {zero:'AWAITING TASK', progress:'LOADING', complete:'CORE ONLINE'}[s];
+      st.querySelectorAll('.segs i').forEach((b,i)=>{ b.className = i<lit ? 'on' : (s==='progress'&&i===lit ? 'half' : ''); });
+      st.querySelector('.cy-sec').textContent = 'SEC '+String(lit).padStart(2,'0')+'/16';
+      st.querySelector('.cy-gb').textContent = (v*0.48).toFixed(1)+'/48.0 GB';
+      st.querySelector('.cy-eta').textContent = s==='zero' ? 'QUEUE EMPTY' : s==='complete' ? 'VERIFIED · CRC OK'
+        : 'ETA 00:'+String(Math.max(1,Math.round((100-v)/7))).padStart(2,'0');
+      st.querySelector('.cy-crc').textContent = s==='complete' ? 'SHA1 7C9E…' : '';
+    }
+  };
+
+  document.querySelectorAll('.spec').forEach(spec=>{
+    const id=spec.dataset.id, det=spec.dataset.det==='1';
+    const st=spec.querySelector('.stage'), ctr=spec.querySelector('.controls');
+    let state='zero', value=0, timer=null, clock=null, t0=0;
+
+    ctr.innerHTML = `
+      <div class="seg" role="group" aria-label="State">
+        <button type="button" data-s="zero" aria-pressed="true">Zero</button>
+        <button type="button" data-s="progress" aria-pressed="false">Progress</button>
+        <button type="button" data-s="complete" aria-pressed="false">Complete</button>
+      </div>
+      <button type="button" class="run" id="run-${id}">Run &#9656;</button>
+      ${det?`<label class="scrub" for="scrub-${id}"><span>VALUE</span><input type="range" id="scrub-${id}" min="0" max="100" value="0"><output>0</output></label>`:''}`;
+    const segs=[...ctr.querySelectorAll('.seg button')], scrub=ctr.querySelector('input'), out=ctr.querySelector('output');
+
+    function stop(){ clearTimeout(timer); clearInterval(clock); timer=null; clock=null; }
+    function set(s, v){
+      state=s; if(v!==undefined) value=v;
+      if(s==='zero') value=0; if(s==='complete' && det) value=100;
+      st.classList.remove('is-zero','is-progress','is-complete'); st.classList.add('is-'+s);
+      segs.forEach(b=>b.setAttribute('aria-pressed', b.dataset.s===s));
+      if(det){ st.setAttribute('aria-valuenow', Math.round(value)); scrub.value=value; out.textContent=Math.round(value); }
+      else { st.setAttribute('aria-busy', s==='progress');
+             st.setAttribute('aria-valuetext', s==='progress'?'Working':s==='complete'?'Done':'Not started'); }
+      R[id](st, s, value, performance.now()-t0);
+    }
+    function startClock(){ t0=performance.now(); clearInterval(clock);
+      if(id==='uplink') clock=setInterval(()=>R.uplink(st,state,0,performance.now()-t0),110); }
+    function run(){
+      stop();
+      if(!det){ set('progress'); startClock();
+        timer=setTimeout(()=>{ clearInterval(clock); set('complete'); }, 5600); return; }
+      if(state==='complete') value=0;
+      set('progress', value);
+      const tick=()=>{
+        const step = Math.random()<.18 ? 0 : Math.random()*7+1.5;
+        const nv = Math.min(100, value+step);
+        if(nv>=100){ set('complete'); timer=null; return; }
+        set('progress', nv); timer=setTimeout(tick, 140+Math.random()*320);
+      };
+      timer=setTimeout(tick, 300);
+    }
+
+    segs.forEach(b=>b.addEventListener('click',()=>{
+      stop(); const s=b.dataset.s;
+      if(s==='progress'){ if(det) set('progress', value>0&&value<100?value:45); else { set('progress'); startClock(); } }
+      else set(s);
+    }));
+    ctr.querySelector('.run').addEventListener('click', run);
+    if(scrub) scrub.addEventListener('input',()=>{ stop(); const v=+scrub.value; set(v<=0?'zero':v>=100?'complete':'progress', v); });
+
+    set('zero');
+    // open in motion so the first look shows what they do
+    const go=spec.querySelector('.seg [data-s="progress"]');
+    if(det) go.click(); else setTimeout(()=>go.click(), 0);
+  });
+})();
+</script>

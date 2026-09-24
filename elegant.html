@@ -1,0 +1,517 @@
+<title>Lens and Column</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500&display=swap">
+<style>
+:root{
+  --void:#06070A; --void2:#0C0E13; --panel:rgba(255,255,255,.035); --hair:rgba(255,255,255,.09);
+  --paper:#F4F6FA; --ink2:#AEB6C2; --muted:#7C848F; --faint:#5A626D;
+  --pink:#FFAFD8; --blue:#A9CCFF; --mint:#BFF3DE;
+  --ui:Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; font:300 15px/1.65 var(--ui); color:var(--paper);
+  background:
+    radial-gradient(52% 38% at 14% -4%, rgba(168,196,255,.16), transparent 62%),
+    radial-gradient(46% 34% at 92% 6%, rgba(255,175,216,.10), transparent 62%),
+    linear-gradient(180deg, var(--void2), var(--void) 62%);
+  padding-inline:clamp(16px,5vw,64px); padding-block:56px 76px;
+}
+.wrap{max-width:1160px; margin:0 auto; display:grid; gap:44px}
+header.top{display:grid; gap:14px}
+.eyebrow{font-size:11px; font-weight:500; letter-spacing:.16em; color:var(--muted)}
+h1{margin:0; font-weight:200; font-size:clamp(40px,7vw,78px); line-height:1.02; letter-spacing:-.035em;
+  background:linear-gradient(180deg,#FFFFFF,#9FB0C6); -webkit-background-clip:text; background-clip:text; color:transparent}
+.lede{margin:0; max-width:56ch; color:var(--ink2); font-size:17px; font-weight:200}
+.hint{display:flex; flex-wrap:wrap; gap:8px 20px; font-size:12px; color:var(--muted)}
+.hint b{font-weight:500; color:var(--paper)}
+
+.pair{display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr)); gap:26px}
+.card{background:var(--panel); border:1px solid var(--hair); border-radius:26px; padding:24px 24px 20px;
+  display:grid; gap:16px; align-content:start; box-shadow:0 40px 80px -50px #000, inset 0 1px 0 rgba(255,255,255,.07)}
+.card header{display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 12px}
+.card h2{margin:0; font-weight:300; font-size:22px; letter-spacing:-.02em}
+.kind{font-size:10px; font-weight:500; letter-spacing:.16em; color:var(--faint)}
+.card p{margin:0; flex:1 1 100%; font-size:13.5px; color:var(--muted); max-width:46ch}
+
+.stage{position:relative; height:400px; border-radius:20px; overflow:hidden; cursor:pointer; touch-action:none;
+  background:
+    radial-gradient(70% 55% at 50% 12%, rgba(150,180,230,.10), transparent 70%),
+    radial-gradient(120% 90% at 50% 120%, rgba(255,255,255,.05), transparent 60%),
+    #070810}
+.stage:focus-visible{outline:1px solid rgba(169,204,255,.8); outline-offset:3px}
+.stage canvas{display:block; width:100%; height:100%}
+.floor{position:absolute; left:50%; bottom:46px; width:280px; height:26px; transform:translateX(-50%);
+  background:radial-gradient(closest-side ellipse, rgba(0,0,0,.72), transparent 72%); filter:blur(7px); pointer-events:none}
+.overlay{position:absolute; inset:0; pointer-events:none}
+.caption{position:absolute; left:0; right:0; bottom:18px; text-align:center}
+.caption .t{display:block; font-weight:200; font-size:21px; letter-spacing:-.01em; transition:color .5s, opacity .5s}
+.caption .s{display:block; margin-top:8px; font-size:9px; font-weight:500; letter-spacing:.18em; color:var(--faint)}
+.is-zero .caption .t{color:var(--muted)}
+.mark{position:absolute; left:50%; top:47%; width:74px; height:74px; margin:-37px 0 0 -37px; opacity:0;
+  transform:scale(.9); transition:opacity .5s, transform .6s cubic-bezier(.22,1,.36,1)}
+.is-complete .mark{opacity:1; transform:scale(1)}
+.mark path{fill:none; stroke:#FFFFFF; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;
+  stroke-dasharray:60; stroke-dashoffset:60; transition:stroke-dashoffset .8s .25s cubic-bezier(.4,0,.2,1);
+  filter:drop-shadow(0 0 8px rgba(200,225,255,.9))}
+.is-complete .mark path{stroke-dashoffset:0}
+
+.read{position:absolute; right:26px; top:50%; transform:translateY(-50%); text-align:right}
+.num{font-weight:200; font-size:70px; line-height:1; letter-spacing:-.05em; font-variant-numeric:tabular-nums;
+  background:linear-gradient(180deg,#FFFFFF,#A8B6C8); -webkit-background-clip:text; background-clip:text; color:transparent}
+.num span{font-size:20px; letter-spacing:0; -webkit-text-fill-color:var(--faint)}
+.read .lab{margin-top:6px; font-size:15px; font-weight:300; color:var(--ink2)}
+.read .sub{margin-top:3px; font-size:9px; font-weight:500; letter-spacing:.18em; color:var(--faint)}
+.lvl{position:absolute; left:52%; right:128px; height:1px; background:linear-gradient(90deg, rgba(255,255,255,.05), rgba(255,255,255,.65));
+  box-shadow:0 0 8px rgba(180,210,255,.5); opacity:0; transition:top .45s cubic-bezier(.22,1,.36,1), opacity .4s}
+.lvl::after{content:""; position:absolute; right:-3px; top:-2px; width:5px; height:5px; border-radius:50%;
+  background:#EAF3FF; box-shadow:0 0 10px 2px rgba(169,204,255,.8)}
+.is-progress .lvl, .is-complete .lvl{opacity:1}
+.scale{position:absolute; right:14px; top:50%; height:230px; width:10px; transform:translateY(-50%); opacity:.35; transition:opacity .4s}
+.stage:hover .scale{opacity:.8}
+.scale i{position:absolute; right:0; width:8px; height:1px; background:rgba(255,255,255,.55)}
+
+.states{display:flex; gap:16px; padding-top:13px; border-top:1px solid var(--hair);
+  font-size:11px; font-weight:500; letter-spacing:.12em; color:var(--faint)}
+.states span{display:flex; align-items:center; gap:7px; text-transform:uppercase}
+.states i{width:5px; height:5px; border-radius:50%; background:#2B313B; transition:background .3s, box-shadow .3s}
+.states span[data-on="true"]{color:var(--paper)}
+.states span[data-on="true"] i{background:#CFE3FF; box-shadow:0 0 10px 2px rgba(169,204,255,.45)}
+footer{font-size:12.5px; color:var(--muted); border-top:1px solid var(--hair); padding-top:20px; max-width:72ch}
+
+.fallback{position:absolute; inset:0; display:none; place-items:center}
+.stage[data-nogl="true"] .fallback{display:grid}
+.fb-ring{width:210px; height:210px; border-radius:50%; margin-bottom:30px;
+  background:conic-gradient(from 210deg, rgba(255,255,255,.75), rgba(169,204,255,.35), rgba(255,175,216,.4), rgba(255,255,255,.75));
+  -webkit-mask:radial-gradient(closest-side circle, transparent 0 60%, #000 60.5%); mask:radial-gradient(closest-side circle, transparent 0 60%, #000 60.5%)}
+.fb-cap{width:82px; height:230px; border-radius:41px; margin-bottom:26px;
+  background:linear-gradient(160deg, rgba(255,255,255,.5), rgba(169,204,255,.22) 60%, rgba(255,255,255,.35));
+  border:1px solid rgba(255,255,255,.35)}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">ADVANCED INTERFACE · WEEK 1 · TONE: ELEGANT</div>
+    <h1>Lens &amp; Column</h1>
+    <p class="lede">Two solid pieces of optical glass on a dark stage, modelled and lit rather than drawn. The words behind them are bent and split into colour by the bodies, and the column holds water that never stops moving.</p>
+    <div class="hint"><span><b>Move</b> — the key light follows your cursor across the glass</span><span><b>Click</b> — start, click again to reset</span><span><b>Drag</b> the column — set the level by hand</span></div>
+  </header>
+
+  <div class="pair">
+    <article class="card" data-id="lens">
+      <header>
+        <h2>Lens</h2><span class="kind">INDETERMINATE</span>
+        <p>A thick glass torus. A point of light orbits inside the body while the work runs, refracting through the wall; when it ends the glass comes to rest and holds a single mark.</p>
+      </header>
+      <div class="stage is-zero" tabindex="0" role="progressbar" aria-label="Lens, indeterminate" aria-busy="false">
+        <div class="floor"></div>
+        <div class="fallback"><div class="fb-ring"></div></div>
+        <div class="overlay">
+          <svg class="mark" viewBox="0 0 74 74" aria-hidden="true"><path d="M21 38 L32 50 L54 25"/></svg>
+          <div class="caption"><span class="t">Idle</span><span class="s">CLICK TO BEGIN</span></div>
+        </div>
+      </div>
+      <div class="states" aria-hidden="true">
+        <span data-s="zero" data-on="true"><i></i>Zero</span><span data-s="progress"><i></i>Progress</span><span data-s="complete"><i></i>Complete</span>
+      </div>
+    </article>
+
+    <article class="card" data-id="column">
+      <header>
+        <h2>Column</h2><span class="kind">DETERMINATE</span>
+        <p>A standing glass vial holding water. The surface sits at the level of the work and ripples whether or not anything is happening; the number is set beside the object, never inside it.</p>
+      </header>
+      <div class="stage is-zero" tabindex="0" role="progressbar" aria-label="Column, determinate" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div class="floor"></div>
+        <div class="fallback"><div class="fb-cap"></div></div>
+        <div class="overlay">
+          <div class="lvl" style="top:77%"></div>
+          <div class="scale"><i style="top:0"></i><i style="top:25%"></i><i style="top:50%"></i><i style="top:75%"></i><i style="top:100%"></i></div>
+          <div class="read"><div class="num">0<span>%</span></div><div class="lab">Not started</div><div class="sub">0 OF 100</div></div>
+          <div class="caption"><span class="t"></span><span class="s">CLICK TO FILL · DRAG TO SET</span></div>
+        </div>
+      </div>
+      <div class="states" aria-hidden="true">
+        <span data-s="zero" data-on="true"><i></i>Zero</span><span data-s="progress"><i></i>Progress</span><span data-s="complete"><i></i>Complete</span>
+      </div>
+    </article>
+  </div>
+
+  <footer>Both pieces are real geometry with refraction, dispersion-tinted rim lights and a studio environment, so the glass hardens and softens as the light moves. State is reported to screen readers, and each stage can be operated from the keyboard with Enter or Space.</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.152.2/three.min.js"></script>
+<script>
+(function(){
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const hasGL = (()=>{ try{ const c=document.createElement('canvas');
+    return !!(window.THREE && (c.getContext('webgl2')||c.getContext('webgl'))); }catch(e){ return false; } })();
+
+  // ---------- studio environment (bright strips on a dark ground) ----------
+  function envTexture(){
+    const c = document.createElement('canvas'); c.width = 1024; c.height = 512;
+    const x = c.getContext('2d');
+    const g = x.createLinearGradient(0,0,0,512);
+    g.addColorStop(0,'#3a4a68'); g.addColorStop(.42,'#0d1220'); g.addColorStop(1,'#05070c');
+    x.fillStyle = g; x.fillRect(0,0,1024,512);
+    const strip = (cx,cy,w,h,a,col)=>{
+      const rg = x.createLinearGradient(cx-w/2,cy,cx+w/2,cy);
+      rg.addColorStop(0,'rgba(0,0,0,0)'); rg.addColorStop(.5,col); rg.addColorStop(1,'rgba(0,0,0,0)');
+      x.globalAlpha = a; x.fillStyle = rg; x.fillRect(cx-w/2, cy-h/2, w, h); x.globalAlpha = 1;
+    };
+    strip(250,110,520,86,1,'rgba(255,255,255,1)');
+    strip(700,92,460,56,1,'rgba(235,245,255,1)');
+    strip(510,240,760,26,.95,'rgba(255,255,255,1)');
+    strip(150,330,380,34,.8,'rgba(255,214,238,1)');
+    strip(880,300,360,30,.8,'rgba(205,229,255,1)');
+    strip(520,420,840,54,.6,'rgba(255,255,255,1)');
+    strip(60,200,240,18,.9,'rgba(255,255,255,1)');
+    const t = new THREE.CanvasTexture(c);
+    t.mapping = THREE.EquirectangularReflectionMapping;
+    if('colorSpace' in t) t.colorSpace = THREE.SRGBColorSpace; else t.encoding = THREE.sRGBEncoding;
+    return t;
+  }
+
+  function makeRenderer(stage){
+    const canvas = document.createElement('canvas');
+    stage.insertBefore(canvas, stage.firstChild);
+    const r = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+    r.setPixelRatio(Math.min(2, window.devicePixelRatio||1));
+    r.setSize(stage.clientWidth, stage.clientHeight, false);
+    if('outputColorSpace' in r) r.outputColorSpace = THREE.SRGBColorSpace;
+    else if('outputEncoding' in r) r.outputEncoding = THREE.sRGBEncoding;
+    r.toneMapping = THREE.ACESFilmicToneMapping;
+    r.toneMappingExposure = 1.5;
+    r.localClippingEnabled = true;
+    return {renderer:r, canvas};
+  }
+
+  function glassMaterial(extra){
+    return new THREE.MeshPhysicalMaterial(Object.assign({
+      color: 0xffffff, metalness: 0, roughness: 0.02,
+      transmission: 1, thickness: 0.42, ior: 1.5,
+      attenuationColor: new THREE.Color(0xeaf3ff), attenuationDistance: 6,
+      clearcoat: 1, clearcoatRoughness: 0.02,
+      envMapIntensity: 3.4,
+      iridescence: 0.4, iridescenceIOR: 1.4, iridescenceThicknessRange: [140, 460], specularIntensity: 1,
+      transparent: true, side: THREE.FrontSide
+    }, extra||{}));
+  }
+
+
+  // bold type on black, used as the thing the glass bends
+  function typePlate(lines, size){
+    const c=document.createElement('canvas'); c.width=1400; c.height=700; const x=c.getContext('2d');
+    x.fillStyle='#000'; x.fillRect(0,0,1400,700);
+    x.fillStyle='#fff'; x.textAlign='center'; x.textBaseline='middle';
+    x.font='800 '+size+'px Inter, -apple-system, system-ui, sans-serif';
+    if(x.letterSpacing!==undefined) x.letterSpacing='-6px';
+    const n=lines.length, lh=size*1.0;
+    lines.forEach((l,i)=>x.fillText(l, 700, 350 + (i-(n-1)/2)*lh));
+    const t=new THREE.CanvasTexture(c);
+    if('colorSpace' in t) t.colorSpace=THREE.SRGBColorSpace; else t.encoding=THREE.sRGBEncoding;
+    return t;
+  }
+  // three tinted copies at slightly different depths: the glass splits them into colour
+  function dispersionPlate(scene, tex, w, h, z){
+    [[0xff0000,0],[0x00ff00,0.05],[0x0000ff,0.1]].forEach(([col,dz])=>{
+      const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),
+        new THREE.MeshBasicMaterial({map:tex, color:col, blending:THREE.AdditiveBlending, transparent:true, depthWrite:false}));
+      m.position.set(0,0,z-dz); scene.add(m);
+    });
+  }
+
+  const WAVE_HEAD = `
+    uniform float uTime; uniform float uAmp;
+    float wav(vec2 p, float t){
+      return 0.040*sin(p.x*5.0 + t*1.8)
+           + 0.030*sin(p.y*6.3 - t*1.4)
+           + 0.022*sin((p.x+p.y)*4.1 + t*2.3);
+    }
+  `;
+  // a rippling surface of water, clipped to a circle
+  function waterSurface(uni, radius){
+    const m=new THREE.MeshPhysicalMaterial({color:0xeaf4ff, metalness:0, roughness:0.04,
+      emissive:new THREE.Color(0x7fb2f0), emissiveIntensity:.35, envMapIntensity:2.6,
+      clearcoat:1, clearcoatRoughness:.03, side:THREE.DoubleSide});
+    m.onBeforeCompile=sh=>{
+      sh.uniforms.uTime=uni.uTime; sh.uniforms.uAmp=uni.uAmp;
+      sh.vertexShader = WAVE_HEAD + sh.vertexShader
+        .replace('#include <beginnormal_vertex>', `
+          vec2 P = position.xy; float e = 0.03;
+          float hx = (wav(P+vec2(e,0.0),uTime)-wav(P-vec2(e,0.0),uTime))*uAmp/(2.0*e);
+          float hy = (wav(P+vec2(0.0,e),uTime)-wav(P-vec2(0.0,e),uTime))*uAmp/(2.0*e);
+          vec3 objectNormal = normalize(vec3(-hx, -hy, 1.0));
+        `)
+        .replace('#include <begin_vertex>', `
+          vec3 transformed = vec3( position );
+          transformed.z += wav(position.xy, uTime)*uAmp;
+          vRad = length(position.xy);
+        `);
+      sh.vertexShader = 'varying float vRad;\n' + sh.vertexShader;
+      sh.fragmentShader = 'varying float vRad;\n' + sh.fragmentShader
+        .replace('#include <clipping_planes_fragment>',
+          '#include <clipping_planes_fragment>\n if(vRad > '+radius.toFixed(3)+') discard;');
+    };
+    return m;
+  }
+  // the body of water, with a current running up the column
+  function waterBody(uni){
+    const m=new THREE.MeshPhysicalMaterial({color:0x8cc4f5, metalness:0, roughness:0.08,
+      emissive:new THREE.Color(0x2a5c9c), emissiveIntensity:.45, envMapIntensity:1.8,
+      clearcoat:1, clearcoatRoughness:.05});
+    m.onBeforeCompile=sh=>{
+      sh.uniforms.uTime=uni.uTime; sh.uniforms.uAmp=uni.uAmp;
+      sh.vertexShader = `
+        uniform float uTime; uniform float uAmp;
+        float flow(float y, float a, float t){
+          return 0.026*sin(y*6.5 - t*2.1) + 0.016*sin(a*3.0 + t*1.5) + 0.010*sin(y*12.0 + t*2.9);
+        }
+      ` + sh.vertexShader
+        .replace('#include <beginnormal_vertex>', `
+          vec3 radial = normalize(vec3(position.x, 0.0, position.z) + vec3(0.0001,0.0,0.0));
+          float ang = atan(position.z, position.x);
+          float e = 0.02;
+          float dy = (flow(position.y+e, ang, uTime) - flow(position.y-e, ang, uTime))*uAmp/(2.0*e);
+          vec3 objectNormal = normalize(radial - vec3(0.0, dy, 0.0));
+        `)
+        .replace('#include <begin_vertex>', `
+          vec3 transformed = vec3( position );
+          transformed += normalize(vec3(position.x, 0.0, position.z) + vec3(0.0001,0.0,0.0))
+                         * flow(position.y, atan(position.z, position.x), uTime) * uAmp;
+        `);
+    };
+    return m;
+  }
+
+  function build(stage, id){
+    const {renderer} = makeRenderer(stage);
+    const scene = new THREE.Scene();
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const env = pmrem.fromEquirectangular(envTexture()).texture;
+    scene.environment = env;
+
+    const camera = new THREE.PerspectiveCamera(32, stage.clientWidth/stage.clientHeight, 0.1, 40);
+    camera.position.set(0, 0.05, 7.2);
+
+    const rig = new THREE.Group(); scene.add(rig);
+
+    // key light that follows the cursor + cool/warm rim lights for spectral edges
+    const key = new THREE.PointLight(0xffffff, 44, 34, 2); key.position.set(2.2, 2.4, 3.2); scene.add(key);
+    const rimA = new THREE.DirectionalLight(0xffc0e2, 1.5); rimA.position.set(-3.4, 1.2, -1.6); scene.add(rimA);
+    const rimB = new THREE.DirectionalLight(0xa9ccff, 1.7); rimB.position.set(3.2, -1.4, -2.0); scene.add(rimB);
+    const backLight = new THREE.DirectionalLight(0xffffff, 2.4); backLight.position.set(0, 0.6, -4); scene.add(backLight);
+    scene.add(new THREE.AmbientLight(0x2c3648, 1.0));
+
+    // something behind the glass, so refraction has content to bend
+    const bgCanvas = document.createElement('canvas'); bgCanvas.width = 512; bgCanvas.height = 512;
+    (function(){
+      const x = bgCanvas.getContext('2d');
+      x.fillStyle = '#05070c'; x.fillRect(0,0,512,512);
+      const gg = x.createRadialGradient(256,140,8,256,170,300);
+      gg.addColorStop(0,'rgba(150,185,245,.28)'); gg.addColorStop(.3,'rgba(40,58,95,.14)'); gg.addColorStop(.8,'rgba(5,7,12,0)');
+      x.fillStyle = gg; x.fillRect(0,0,512,512);
+    })();
+    const bgTex = new THREE.CanvasTexture(bgCanvas);
+    if('colorSpace' in bgTex) bgTex.colorSpace = THREE.SRGBColorSpace; else bgTex.encoding = THREE.sRGBEncoding;
+    const backdrop = new THREE.Mesh(new THREE.PlaneGeometry(30, 20), new THREE.MeshBasicMaterial({map:bgTex}));
+    backdrop.position.z = -6; scene.add(backdrop);
+    dispersionPlate(scene, typePlate(['are you','ready'], id==='lens' ? 150 : 190), 7.2, 3.6, -1.5);
+
+    const state = {mode:'zero', value:0};
+    const uni = {uTime:{value:0}, uAmp:{value:1}};
+    const api = {state, render:null, setValue:null, uni};
+
+    if(id === 'lens'){
+      const glass = new THREE.Mesh(new THREE.TorusGeometry(1.24, 0.42, 220, 96), glassMaterial({thickness:0.55}));
+      rig.add(glass);
+
+      // the light that travels inside the body while working
+      const spark = new THREE.Mesh(
+        new THREE.SphereGeometry(0.085, 24, 24),
+        new THREE.MeshBasicMaterial({color:0xffffff})
+      );
+      const sparkLight = new THREE.PointLight(0xdcecff, 0, 6, 2);
+      rig.add(spark, sparkLight);
+
+      // frosted core that appears at the end
+      const core = new THREE.Mesh(
+        new THREE.CircleGeometry(0.92, 96),
+        new THREE.MeshPhysicalMaterial({color:0xffffff, roughness:0.85, transmission:0.55, thickness:0.4,
+          ior:1.45, envMapIntensity:1.4, transparent:true, opacity:0, depthWrite:false})
+      );
+      core.position.z = -0.02; rig.add(core);
+
+      let a = -Math.PI/2, coreFade = 0;
+      api.render = (dt, pointer)=>{
+        const working = state.mode === 'progress';
+        if(working && !reduce) a += dt * (1.5 + pointer.near * 1.7);
+        const R = 1.24;
+        spark.position.set(Math.cos(a)*R, Math.sin(a)*R, 0);
+        sparkLight.position.copy(spark.position); sparkLight.position.z = 0.15;
+        spark.visible = working;                       // complete rests, like zero
+        spark.material.opacity = 1;
+        sparkLight.intensity = working ? 13 : 0;
+        coreFade += (0 - coreFade) * Math.min(1, dt*3.2);
+        core.visible = false;
+        rig.rotation.y = pointer.x * 0.30;
+        rig.rotation.x = -pointer.y * 0.22;
+        glass.rotation.z += dt * (working ? 0.12 : 0);
+      };
+    } else {
+      const H = 1.34, Rr = 0.5;
+      const glass = new THREE.Mesh(new THREE.CapsuleGeometry(Rr, H, 48, 96), glassMaterial({thickness:0.5}));
+      rig.add(glass);
+
+      const plane = new THREE.Plane(new THREE.Vector3(0,-1,0), 0);
+      const liquidMat = waterBody(uni);
+      liquidMat.clippingPlanes = [plane]; liquidMat.clipShadows = true;
+      const liquid = new THREE.Mesh(new THREE.CapsuleGeometry(Rr*0.9, H*1.0, 48, 120), liquidMat);
+      rig.add(liquid);
+
+      const surface = new THREE.Mesh(
+        new THREE.PlaneGeometry(Rr*1.9, Rr*1.9, 64, 64),
+        waterSurface(uni, Rr*0.88)
+      );
+      surface.rotation.x = -Math.PI/2; rig.add(surface);
+
+      const bottom = -(H/2 + Rr*0.9) + 0.06, top = (H/2 + Rr*0.9) - 0.06;
+      api.setValue = v=>{
+        const y = bottom + (top - bottom) * v/100;
+        plane.constant = y;             // keep only the liquid below y
+        surface.position.y = y;
+        surface.visible = v > 0.5 && v < 99.5;
+        liquid.visible = v > 0.5;
+      };
+      api.setValue(0);
+      api.render = (dt, pointer)=>{
+        const working = state.mode === 'progress';
+        uni.uAmp.value += ((working ? 1.35 : 0.8) - uni.uAmp.value) * Math.min(1, dt*2);
+        rig.rotation.y = pointer.x * 0.26;
+        rig.rotation.x = -pointer.y * 0.16;
+      };
+    }
+
+    // cursor-driven key light
+    const pointer = {x:0, y:0, near:0, tx:0, ty:0};
+    api.tick = (dt)=>{
+      if(!reduce) uni.uTime.value += dt;          // the water keeps moving on its own
+      pointer.x += (pointer.tx - pointer.x) * Math.min(1, dt*5);
+      pointer.y += (pointer.ty - pointer.y) * Math.min(1, dt*5);
+      pointer.near = 1 - Math.min(1, Math.hypot(pointer.x, pointer.y));
+      key.position.set(pointer.x*3.4, 1.6 - pointer.y*3.0, 3.4);
+      api.render(dt, pointer);
+      renderer.render(scene, camera);
+    };
+    api.pointer = pointer;
+    api.resize = ()=>{
+      const w = stage.clientWidth, h = stage.clientHeight;
+      renderer.setSize(w, h, false); camera.aspect = w/h; camera.updateProjectionMatrix();
+    };
+    return api;
+  }
+
+  const COPY = {
+    lens:   {zero:['Idle','CLICK TO BEGIN'], progress:['Working','ONE MOMENT'], complete:['Ready','CLICK TO RESET']},
+    column: {zero:['','CLICK TO FILL · DRAG TO SET'], progress:['','DRAG TO SET · CLICK TO RESET'], complete:['','CLICK TO RESET']}
+  };
+
+  const scenes = [];
+  document.querySelectorAll('.card').forEach(card=>{
+    const id = card.dataset.id, stage = card.querySelector('.stage');
+    const dots = [...card.querySelectorAll('.states span')];
+    const capT = stage.querySelector('.caption .t'), capS = stage.querySelector('.caption .s');
+    let three = null, timer = null, dragging = false, moved = false;
+    let mode = 'zero', value = 0;
+
+    if(hasGL){ try{ three = build(stage, id); scenes.push(three); }catch(e){ three = null; } }
+    if(!three) stage.dataset.nogl = 'true';
+
+    function paint(){
+      stage.classList.remove('is-zero','is-progress','is-complete');
+      stage.classList.add('is-'+mode);
+      dots.forEach(d=>d.dataset.on = String(d.dataset.s === mode));
+      const [t,s] = COPY[id][mode]; capT.textContent = t; capS.textContent = s;
+      if(three){ three.state.mode = mode; three.state.value = value; if(three.setValue) three.setValue(value); }
+      if(id === 'column'){
+        const v = Math.round(value);
+        stage.querySelector('.num').innerHTML = v + '<span>%</span>';
+        stage.querySelector('.lab').textContent = mode==='zero' ? 'Not started' : mode==='complete' ? 'Full' : 'Filling';
+        stage.querySelector('.sub').textContent = v + ' OF 100';
+        stage.querySelector('.lvl').style.top = (76.9 - 0.538 * value).toFixed(2) + '%';
+        stage.setAttribute('aria-valuenow', v);
+      } else {
+        stage.setAttribute('aria-busy', mode === 'progress');
+        stage.setAttribute('aria-valuetext', mode==='progress' ? 'Working' : mode==='complete' ? 'Done' : 'Not started');
+      }
+    }
+    function set(m, v){
+      mode = m;
+      if(v !== undefined) value = Math.max(0, Math.min(100, v));
+      if(m === 'zero') value = 0;
+      if(m === 'complete') value = 100;
+      paint();
+    }
+    const stop = ()=>{ clearTimeout(timer); timer = null; };
+
+    function run(){
+      stop();
+      if(id === 'lens'){ set('progress'); timer = setTimeout(()=>set('complete'), 5200); return; }
+      if(mode === 'complete') value = 0;
+      set('progress', value);
+      const tick = ()=>{
+        const next = Math.min(100, value + Math.random()*8 + 3);
+        if(next >= 100){ set('complete'); timer = null; return; }
+        set('progress', next); timer = setTimeout(tick, 280 + Math.random()*320);
+      };
+      timer = setTimeout(tick, 280);
+    }
+    function activate(){
+      if(mode === 'complete' || (mode === 'progress' && id === 'lens')){ stop(); set('zero'); return; }
+      run();
+    }
+    stage.addEventListener('click', ()=>{ if(!moved) activate(); moved = false; });
+    stage.addEventListener('keydown', e=>{ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); activate(); } });
+
+    stage.addEventListener('pointermove', e=>{
+      const r = stage.getBoundingClientRect();
+      const px = (e.clientX - r.left)/r.width * 2 - 1, py = (e.clientY - r.top)/r.height * 2 - 1;
+      if(three){ three.pointer.tx = px; three.pointer.ty = py; }
+      if(dragging && id === 'column'){
+        moved = true;
+        const v = (1 - (e.clientY - r.top - 60) / (r.height - 150)) * 100;
+        set(v <= 0 ? 'zero' : v >= 100 ? 'complete' : 'progress', v);
+      }
+    });
+    stage.addEventListener('pointerleave', ()=>{ if(three){ three.pointer.tx = 0; three.pointer.ty = 0; } });
+
+    if(id === 'column'){
+      stage.addEventListener('pointerdown', e=>{
+        if(e.clientX - stage.getBoundingClientRect().left > stage.clientWidth * 0.62) return; // right side is the readout
+        stop(); dragging = true; stage.setPointerCapture(e.pointerId);
+      });
+      const end = ()=>{ dragging = false; };
+      stage.addEventListener('pointerup', end);
+      stage.addEventListener('pointercancel', end);
+    }
+
+    // open in a working state so the first look shows what it does
+    set('progress', id === 'column' ? 45 : undefined);
+    if(id === 'lens') stop();
+  });
+
+  if(scenes.length){
+    let last = performance.now(), visible = true;
+    document.addEventListener('visibilitychange', ()=>{ visible = !document.hidden; last = performance.now(); });
+    addEventListener('resize', ()=>scenes.forEach(s=>s.resize()));
+    (function loop(now){
+      requestAnimationFrame(loop);
+      if(!visible) return;
+      const dt = Math.min(0.05, (now - last)/1000); last = now;
+      scenes.forEach(s=>s.tick(dt));
+    })(last);
+  }
+})();
+</script>
